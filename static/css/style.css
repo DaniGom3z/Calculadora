@@ -21,6 +21,25 @@ body {
     gap: 10px;
 }
 
+.insert-result {
+    background-color: #00c8ff;
+}
+
+.dilit{
+    background-color: #ff0000;
+}
+.clear-last{
+    background-color: #ff6565;
+}
+.mci{
+    background-color: #0000ff;
+}
+.arbolin{
+    width: 165px;
+    background-color: #008e0e;
+}
+
+
 button {
     padding: 10px;
     font-size: 16px;
@@ -65,6 +84,19 @@ button:hover {
 .left, .right {
     display: inline-block;
     padding-top: 50px;
+}
+
+
+#expression {
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+/* Estilos adicionales para las líneas que conectan los nodos */
+.operator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 
