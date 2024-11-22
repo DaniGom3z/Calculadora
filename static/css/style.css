@@ -126,3 +126,70 @@ button:hover {
     background-color: #ddd; /* Color de fondo al pasar el mouse */
 }
 
+.tree-node {
+    position: relative;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.tree-node .node {
+    display: inline-block;
+    padding: 10px;
+    border-radius: 50%;
+    background-color: #000000;
+    color: white;
+    text-align: center;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.tree-node .children {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    position: relative;
+}
+
+.tree-node .child {
+    width: 50%;
+}
+
+.tree-node .child::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    width: 1px;
+    height: 50px;
+    background: #ffffff;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.tree-node .child.left::before {
+    left: 75%;
+}
+
+.tree-node .child.right::before {
+    left: 25%;
+}
+
+.tree-node::before, .tree-node::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 20px;
+}
+
+.tree-node::before {
+    left: 0;
+    border-right: 1px solid #ccc
+}
+
+.tree-node::after {
+    right: 0;
+}
+

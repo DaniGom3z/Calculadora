@@ -132,22 +132,22 @@ def tree():
         'total_operators': total_operators
     })
 
-
 def render_tree(node):
-    """Renderiza el árbol como HTML de manera recursiva."""
-    if node['type'] == 'number':
+    if node["type"] == "number":
         return f'<div class="node">{node["value"]}</div>'
-    left = render_tree(node['left'])
-    right = render_tree(node['right'])
-    operator = "+" if node['type'] == 'add' else "-" if node['type'] == 'sub' else "*" if node['type'] == 'mul' else "/"
+    
+    left_html = render_tree(node["left"])
+    right_html = render_tree(node["right"])
+    operator = "+" if node["type"] == "add" else "-" if node["type"] == "sub" else "*" if node["type"] == "mul" else "/"
+
     return f'''
-        <div class="node operator">
-            {operator}
+    <div class="tree-node">
+        <div class="node">{operator}</div>
+        <div class="children">
+            <div class="child left">{left_html}</div>
+            <div class="child right">{right_html}</div>
         </div>
-        <div class="operator">
-            <div class="left">{left}</div>
-            <div class="right">{right}</div>
-        </div>
+    </div>
     '''
 
 
@@ -180,22 +180,22 @@ def extract_tokens(expression):
                 tokens.append(('number', char))
                 total_numbers += 1
         elif char in '+':
-            tokens.append(('operator plus', char))
+            tokens.append(('operador suma', char))
             total_operators += 1
         elif char in '-':
-            tokens.append(('operator minus', char))
+            tokens.append(('operador resta', char))
             total_operators += 1
         elif char in '*':
-            tokens.append(('operator times', char))
+            tokens.append(('operador multiplicacion', char))
             total_operators += 1
         elif char in '/':
-            tokens.append(('operator divide', char))
+            tokens.append(('operador division', char))
             total_operators += 1
         elif char in '(':
-            tokens.append(('operator lparen', char))
+            tokens.append(('operador parentesis izquierda', char))
             total_operators += 1
         elif char in ')':
-            tokens.append(('operator rparen', char))
+            tokens.append(('operador parentesis derecha', char))
             total_operators += 1
     return tokens, total_numbers, total_operators
 

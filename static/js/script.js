@@ -77,7 +77,7 @@ function displayTokens(tokens, total_numbers, total_operators) {
         const typeCell = document.createElement('td');
         // Identificar correctamente el tipo de token
         if (token[0] === 'number') {
-            typeCell.textContent = 'Número entero';
+            typeCell.textContent = 'Número';
         } else if (token[0] === 'operador suma') {
             typeCell.textContent = 'Operador Suma';
         } else if (token[0] === 'operador resta') {
