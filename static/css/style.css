@@ -57,6 +57,7 @@ button:hover {
 .tree-container {
     margin-left: 25%;
     margin-top: 20px;
+    margin: 5%;
 }
 
 .node {
@@ -72,7 +73,7 @@ button:hover {
     align-items: center;
 }
 .node operator {
-    background-color: #ff0000;
+    background-color: #ffffff;
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -92,11 +93,36 @@ button:hover {
     width: 100%;
 }
 
-/* Estilos adicionales para las líneas que conectan los nodos */
-.operator {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+
+.tablas{
+    margin-right: 5%;
 }
 
+
+/* Estilo para la tabla */
+#tokens-table {
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-family: Arial, sans-serif;
+}
+
+#tokens-table th, #tokens-table td {
+    border: 1px solid #000000;
+    padding: 8px;
+    text-align: left;
+}
+
+#tokens-table th {
+    background-color: #00238b; /* Color verde para el encabezado */
+    color: white;
+    font-weight: bold;
+}
+
+#tokens-table tr:nth-child(even) {
+    background-color: #000000; /* Color de fondo para filas pares */
+}
+
+#tokens-table tr:hover {
+    background-color: #ddd; /* Color de fondo al pasar el mouse */
+}
 

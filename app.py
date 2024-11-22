@@ -1,54 +1,101 @@
 from flask import Flask, render_template, request, jsonify
-from lark import Lark, Transformer
 from flask_cors import CORS
+import ply.lex as lex
+import ply.yacc as yacc
 
 app = Flask(__name__)
-CORS(app)  # Esto permite todas las solicitudes CORS desde cualquier origen
+CORS(app)  # Permite todas las solicitudes CORS desde cualquier origen
 
 # Variable global para guardar el resultado de la última operación
 last_result = None
 
-# Definir la gramática y crear el parser
-grammar = """
-    ?start: expr
-    ?expr: term
-         | expr "+" term   -> add
-         | expr "-" term   -> sub
-    ?term: factor
-         | term "*" factor -> mul
-         | term "/" factor -> div
-         | factor "(" expr ")" -> paren_expr
-    ?factor: DECIMAL       -> number
-           | "(" expr ")"
-    DECIMAL: /-?\d+(\.\d+)?/
-    %import common.WS
-    %ignore WS
-"""
-parser = Lark(grammar, parser='lalr')
+# Definir tokens para PLY
+tokens = (
+    'NUMBER',
+    'PLUS',
+    'MINUS',
+    'TIMES',
+    'DIVIDE',
+    'LPAREN',
+    'RPAREN',
+)
 
-# Transformer para construir el árbol
-class TreeBuilder(Transformer):
-    def number(self, n):
-        return {"type": "number", "value": float(n[0].value)}  # Convierte a float para operaciones
+# Reglas de expresión regular para los tokens
+t_PLUS = r'\+'
+t_MINUS = r'-'
+t_TIMES = r'\*'
+t_DIVIDE = r'/'
+t_LPAREN = r'\('
+t_RPAREN = r'\)'
+t_ignore = ' \t'  # Ignorar espacios y tabulaciones
 
-    def add(self, args):
-        return {"type": "add", "left": args[0], "right": args[1]}
-    
-    def sub(self, args):
-        return {"type": "sub", "left": args[0], "right": args[1]}
 
-    def mul(self, args):
-        return {"type": "mul", "left": args[0], "right": args[1]}
+def t_NUMBER(t):
+    r'\d+(\.\d+)?'
+    t.value = float(t.value)  # Convertir a float
+    return t
 
-    def div(self, args):
-        return {"type": "div", "left": args[0], "right": args[1]}
 
-    def paren_expr(self, args):
-        return args[0]  # Devuelve la expresión dentro de los paréntesis directamente
+def t_error(t):
+    raise SyntaxError(f"Token inválido: {t.value[0]}")
+    t.lexer.skip(1)
+
+
+lexer = lex.lex()
+
+# Definir la gramática y reglas para PLY
+precedence = (
+    ('left', 'PLUS', 'MINUS'),
+    ('left', 'TIMES', 'DIVIDE'),
+)
+
+
+def p_expression(p):
+    '''expr : expr PLUS term
+            | expr MINUS term'''
+    p[0] = {"type": "add" if p[2] == '+' else "sub", "left": p[1], "right": p[3]}
+
+
+def p_expression_term(p):
+    '''expr : term'''
+    p[0] = p[1]
+
+
+def p_term(p):
+    '''term : term TIMES factor
+            | term DIVIDE factor'''
+    p[0] = {"type": "mul" if p[2] == '*' else "div", "left": p[1], "right": p[3]}
+
+
+def p_term_factor(p):
+    '''term : factor'''
+    p[0] = p[1]
+
+
+def p_factor_number(p):
+    '''factor : NUMBER'''
+    p[0] = {"type": "number", "value": p[1]}
+
+
+def p_factor_parens(p):
+    '''factor : LPAREN expr RPAREN'''
+    p[0] = p[2]
+
+
+def p_error(p):
+    if p:
+        raise SyntaxError(f"Error de sintaxis cerca de '{p.value}' en la posición {p.lexpos}")
+    else:
+        raise SyntaxError("Error de sintaxis: entrada incompleta o inesperada.")
+
+
+parser = yacc.yacc()
+
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/tree', methods=['POST'])
 def tree():
@@ -61,21 +108,30 @@ def tree():
         expression = str(last_result) if last_result is not None else "0"
 
     if not expression:
-        return jsonify({'treeHTML': '', 'result': ''})
+        return jsonify({'treeHTML': '', 'result': '', 'tokens': [], 'total_numbers': 0, 'total_operators': 0})
 
     try:
         # Parsear la expresión para construir el árbol
-        tree = parser.parse(expression)
-        transformed_tree = TreeBuilder().transform(tree)
-        tree_html = render_tree(transformed_tree)
-        result = evaluate_tree(transformed_tree)
+        tree = parser.parse(expression, lexer=lexer)
+        tree_html = render_tree(tree)
+        result = evaluate_tree(tree)
+
+        # Extraer los tokens y contar números y operadores
+        tokens, total_numbers, total_operators = extract_tokens(expression)
 
         # Guardar el resultado para uso posterior
         last_result = result
-    except Exception as e:
-        return jsonify({'treeHTML': f'<p>Error: {str(e)}</p>', 'result': ''})
+    except SyntaxError as e:
+        return jsonify({'treeHTML': f'<p>Error: {str(e)}</p>', 'result': '', 'tokens': [], 'total_numbers': 0, 'total_operators': 0})
 
-    return jsonify({'treeHTML': tree_html, 'result': result})
+    return jsonify({
+        'treeHTML': tree_html,
+        'result': result,
+        'tokens': tokens,
+        'total_numbers': total_numbers,
+        'total_operators': total_operators
+    })
+
 
 def render_tree(node):
     """Renderiza el árbol como HTML de manera recursiva."""
@@ -83,17 +139,17 @@ def render_tree(node):
         return f'<div class="node">{node["value"]}</div>'
     left = render_tree(node['left'])
     right = render_tree(node['right'])
-    operator = "+" if node['type'] == 'add' else "-" if node['type'] == 'sub' else "*" if node['type'] == 'mul' else "/" 
+    operator = "+" if node['type'] == 'add' else "-" if node['type'] == 'sub' else "*" if node['type'] == 'mul' else "/"
     return f'''
         <div class="node operator">
             {operator}
         </div>
-
         <div class="operator">
             <div class="left">{left}</div>
             <div class="right">{right}</div>
         </div>
     '''
+
 
 def evaluate_tree(node):
     """Evalúa el árbol y retorna el resultado."""
@@ -109,6 +165,40 @@ def evaluate_tree(node):
         return left * right
     elif node['type'] == 'div':
         return left / right
+
+
+def extract_tokens(expression):
+    """Extrae los tokens de la expresión."""
+    tokens = []
+    total_numbers = 0
+    total_operators = 0
+    for char in expression:
+        if char.isdigit() or char == '.':
+            if tokens and tokens[-1][0] == 'number':
+                tokens[-1] = ('number', tokens[-1][1] + char)  # Continuar el número
+            else:
+                tokens.append(('number', char))
+                total_numbers += 1
+        elif char in '+':
+            tokens.append(('operator plus', char))
+            total_operators += 1
+        elif char in '-':
+            tokens.append(('operator minus', char))
+            total_operators += 1
+        elif char in '*':
+            tokens.append(('operator times', char))
+            total_operators += 1
+        elif char in '/':
+            tokens.append(('operator divide', char))
+            total_operators += 1
+        elif char in '(':
+            tokens.append(('operator lparen', char))
+            total_operators += 1
+        elif char in ')':
+            tokens.append(('operator rparen', char))
+            total_operators += 1
+    return tokens, total_numbers, total_operators
+
 
 if __name__ == '__main__':
     app.run(debug=True)

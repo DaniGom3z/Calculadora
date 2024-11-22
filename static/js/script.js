@@ -8,6 +8,10 @@ function clearExpression() {
     // Borrar toda la expresión
     document.getElementById('expression').value = '';
     document.getElementById('result').innerText = '';
+    document.getElementById('tree').innerHTML = '';
+    document.getElementById('tokens-table').innerHTML = '';
+    document.getElementById('total-numbers').textContent = '';
+    document.getElementById('total-operators').textContent = '';
 }
 
 function clearLastDigit() {
@@ -29,9 +33,12 @@ function calculateTree() {
     })
     .then(response => response.json())
     .then(data => {
-        // Mostrar el resultado
+        // Mostrar el árbol de expresión y el resultado
         document.getElementById('tree').innerHTML = data.treeHTML || 'Error al generar el árbol';
         document.getElementById('result').innerText = data.result || 'Error en la expresión';
+
+        // Mostrar tokens
+        displayTokens(data.tokens, data.total_numbers, data.total_operators);
     })
     .catch(error => {
         console.error('Error:', error);
@@ -57,3 +64,43 @@ function insertLastResult() {
         alert("No hay un resultado guardado.");
     }
 }
+
+function displayTokens(tokens, total_numbers, total_operators) {
+    const tokensTable = document.getElementById('tokens-table');
+    tokensTable.innerHTML = `<tr><th>Token</th><th>Tipo</th></tr>`; // Encabezados de tabla
+    
+    tokens.forEach(token => {
+        const row = document.createElement('tr');
+        const tokenCell = document.createElement('td');
+        tokenCell.textContent = token[1];
+
+        const typeCell = document.createElement('td');
+        // Identificar correctamente el tipo de token
+        if (token[0] === 'number') {
+            typeCell.textContent = 'Número entero';
+        } else if (token[0] === 'operador suma') {
+            typeCell.textContent = 'Operador Suma';
+        } else if (token[0] === 'operador resta') {
+            typeCell.textContent = 'Operador Resta';
+        } else if (token[0] === 'operador multiplicacion') {
+            typeCell.textContent = 'Operador Multiplicación';
+        } else if (token[0] === 'operador division') {
+            typeCell.textContent = 'Operador División';
+        } else if (token[0] === 'operator parentesis izquierda') {
+            typeCell.textContent = 'Paréntesis Izquierdo';
+        } else if (token[0] === 'operador parentesis derecha') {
+            typeCell.textContent = 'Paréntesis Derecho';
+        } else {
+            typeCell.textContent = 'Desconocido';
+        }
+
+        row.appendChild(tokenCell);
+        row.appendChild(typeCell);
+        tokensTable.appendChild(row);
+    });
+// Mostrar totales
+document.getElementById('total-numbers').textContent = `Total Números: ${total_numbers}`;
+document.getElementById('total-operators').textContent = `Total Operadores: ${total_operators}`;
+
+}
+

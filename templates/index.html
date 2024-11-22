@@ -6,6 +6,12 @@
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
+    <div class="tablas">
+        <table id="tokens-table"></table>
+        <p id="total-numbers"></p>
+        <p id="total-operators"></p>
+    </div>
+
     <div class="calculator">
         <h5>Resultado: <span id="result"></span></h5>
         <input id="expression" type="text" placeholder="Enter expression" readonly>
@@ -39,6 +45,8 @@
         <h2>Árbol:</h2>
         <div id="tree"></div>
     </div>
+
+    
 
     <script src="/static/js/script.js"></script>
 </body>
